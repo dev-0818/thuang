@@ -95,62 +95,67 @@
           </svg>
         </button>
         
-        <div class="lightbox-content" @click.stop>
-          <button 
-            class="lightbox-nav prev" 
-            @click="prevImage" 
-            :disabled="currentImageIndex === 0"
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-
-          <div class="lightbox-image-container">
-            <picture>
-              <source 
-                :srcset="`${baseUrl}img/${imageFolder}/1200/${currentImage}_result_1200.webp`"
-                media="(max-width: 1200px)"
-              />
-              <source 
-                :srcset="`${baseUrl}img/${imageFolder}/1920/${currentImage}_result_1920.webp`"
-                media="(min-width: 1201px)"
-              />
-              <img 
-                :src="`${baseUrl}img/${imageFolder}/1920/${currentImage}_result_1920.webp`"
-                :alt="`${selectedProject.title} - Image ${currentImageIndex + 1}`"
-              />
-            </picture>
-            <div class="lightbox-info">
-              <h3>{{ selectedProject.title }}</h3>
-              <p>{{ currentImageIndex + 1 }} / {{ selectedProject.images.length }}</p>
+        <div class="lightbox-wrapper" @click.stop>
+          <div class="lightbox-content">
+            <div class="lightbox-image-container">
+              <picture>
+                <source 
+                  :srcset="`${baseUrl}img/${imageFolder}/1200/${currentImage}_result_1200.webp`"
+                  media="(max-width: 1200px)"
+                />
+                <source 
+                  :srcset="`${baseUrl}img/${imageFolder}/1920/${currentImage}_result_1920.webp`"
+                  media="(min-width: 1201px)"
+                />
+                <img 
+                  :src="`${baseUrl}img/${imageFolder}/1920/${currentImage}_result_1920.webp`"
+                  :alt="`${selectedProject.title} - Image ${currentImageIndex + 1}`"
+                />
+              </picture>
+              <div class="lightbox-info" :key="currentImageIndex">
+                <h3>{{ selectedProject.title }}</h3>
+                <p>{{ currentImageIndex + 1 }} / {{ selectedProject.images.length }}</p>
+              </div>
             </div>
           </div>
 
-          <button 
-            class="lightbox-nav next" 
-            @click="nextImage" 
-            :disabled="currentImageIndex === selectedProject.images.length - 1"
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        </div>
+          <!-- Navigation and Thumbnails in one container -->
+          <div class="lightbox-controls">
+            <button 
+              class="lightbox-nav prev" 
+              @click="prevImage" 
+              :disabled="currentImageIndex === 0"
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
 
-        <!-- Thumbnail strip -->
-        <div class="lightbox-thumbnails">
-          <button
-            v-for="(image, index) in selectedProject.images"
-            :key="index"
-            :class="['thumbnail-item', { active: index === currentImageIndex }]"
-            @click.stop="currentImageIndex = index"
-          >
-            <img 
-              :src="`${baseUrl}img/${imageFolder}/600/${image}_result_600.webp`"
-              :alt="`Thumbnail ${index + 1}`"
-            />
-          </button>
+            <!-- Thumbnail strip -->
+            <div class="lightbox-thumbnails" ref="thumbnailContainer">
+              <button
+                v-for="(image, index) in selectedProject.images"
+                :key="index"
+                :class="['thumbnail-item', { active: index === currentImageIndex }]"
+                @click.stop="currentImageIndex = index"
+              >
+                <img 
+                  :src="`${baseUrl}img/${imageFolder}/600/${image}_result_600.webp`"
+                  :alt="`Thumbnail ${index + 1}`"
+                />
+              </button>
+            </div>
+
+            <button 
+              class="lightbox-nav next" 
+              @click="nextImage" 
+              :disabled="currentImageIndex === selectedProject.images.length - 1"
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -190,6 +195,7 @@ const baseUrl = import.meta.env.BASE_URL;
 const selectedProject = ref<Project | null>(null);
 const currentImageIndex = ref(0);
 const showContactModal = ref(false);
+const thumbnailContainer = ref<HTMLElement | null>(null);
 
 // Project data organized by prefix
 const projects: Project[] = [
@@ -390,13 +396,28 @@ const closeLightbox = () => {
 const nextImage = () => {
   if (selectedProject.value && currentImageIndex.value < selectedProject.value.images.length - 1) {
     currentImageIndex.value++;
+    scrollToActiveThumbnail();
   }
 };
 
 const prevImage = () => {
   if (currentImageIndex.value > 0) {
     currentImageIndex.value--;
+    scrollToActiveThumbnail();
   }
+};
+
+const scrollToActiveThumbnail = () => {
+  setTimeout(() => {
+    const activeThumb = document.querySelector('.thumbnail-item.active') as HTMLElement;
+    if (activeThumb) {
+      activeThumb.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, 50);
 };
 
 // Keyboard navigation
@@ -633,6 +654,9 @@ if (typeof window !== 'undefined') {
   object-fit: cover;
   display: block;
   transition: transform 0.3s ease;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none;
 }
 
 .wall-item:hover img {
@@ -680,6 +704,9 @@ if (typeof window !== 'undefined') {
   justify-content: center;
   padding: 2rem;
   animation: fadeIn 0.3s ease;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 @keyframes fadeIn {
@@ -706,14 +733,22 @@ if (typeof window !== 'undefined') {
   transform: rotate(90deg);
 }
 
+.lightbox-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  max-width: 95vw;
+  max-height: 90vh;
+}
+
 .lightbox-content {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   max-width: 90vw;
-  max-height: 70vh;
-  gap: 2rem;
+  max-height: 65vh;
 }
 
 .lightbox-image-container {
@@ -723,29 +758,69 @@ if (typeof window !== 'undefined') {
 .lightbox-image-container picture,
 .lightbox-image-container img {
   max-width: 100%;
-  max-height: 70vh;
+  max-height: 65vh;
   display: block;
   border-radius: 8px;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none;
 }
 
 .lightbox-info {
-  position: absolute;
-  bottom: -3rem;
-  left: 0;
-  right: 0;
+  position: fixed;
+  bottom: 10rem;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
   color: white;
+  z-index: 10001;
+  animation: slideUpFade 0.3s ease-out;
+  white-space: nowrap;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .lightbox-info h3 {
   font-size: 1.5rem;
   font-weight: 400;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .lightbox-info p {
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.lightbox-controls {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 1rem 1.5rem;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10002;
+  animation: slideUpFade 0.3s ease-out;
+  max-width: calc(100vw - 4rem);
+  width: auto;
 }
 
 .lightbox-nav {
@@ -753,7 +828,7 @@ if (typeof window !== 'undefined') {
   border: none;
   color: white;
   cursor: pointer;
-  padding: 1rem;
+  padding: 0.75rem;
   border-radius: 50%;
   transition: all 0.3s ease;
   flex-shrink: 0;
@@ -773,18 +848,33 @@ if (typeof window !== 'undefined') {
 /* Thumbnails */
 .lightbox-thumbnails {
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 0.75rem;
   overflow-x: auto;
-  padding: 1rem;
-  max-width: 90vw;
+  padding: 0.25rem;
+  max-width: min(60vw, 800px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scroll-behavior: smooth;
+}
+
+.lightbox-thumbnails::-webkit-scrollbar {
+  height: 6px;
+}
+
+.lightbox-thumbnails::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lightbox-thumbnails::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
 }
 
 .thumbnail-item {
   flex-shrink: 0;
-  width: 80px;
-  height: 80px;
-  border: 3px solid transparent;
+  width: 70px;
+  height: 70px;
+  border: 2px solid transparent;
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
@@ -802,6 +892,7 @@ if (typeof window !== 'undefined') {
 
 .thumbnail-item.active {
   border-color: #ae8c68;
+  box-shadow: 0 0 12px rgba(174, 140, 104, 0.5);
 }
 
 .thumbnail-item:hover {
@@ -903,17 +994,42 @@ if (typeof window !== 'undefined') {
     right: 1rem;
   }
 
+  .lightbox-wrapper {
+    max-width: 95vw;
+    max-height: 85vh;
+    gap: 1.5rem;
+  }
+
   .lightbox-content {
     max-width: 95vw;
-    max-height: 60vh;
+    max-height: 55vh;
   }
 
   .lightbox-image-container img {
-    max-height: 60vh;
+    max-height: 55vh;
+  }
+
+  .lightbox-controls {
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+    bottom: 1rem;
+  }
+
+  .lightbox-info {
+    bottom: 8.5rem;
+    font-size: 0.9rem;
+  }
+
+  .lightbox-info h3 {
+    font-size: 1.25rem;
+  }
+
+  .lightbox-info p {
+    font-size: 0.9rem;
   }
 
   .lightbox-nav {
-    padding: 0.75rem;
+    padding: 0.625rem;
   }
 
   .lightbox-nav svg {
@@ -923,12 +1039,13 @@ if (typeof window !== 'undefined') {
 
   .lightbox-thumbnails {
     gap: 0.5rem;
-    padding: 0.5rem;
+    padding: 0.25rem;
+    max-width: 50vw;
   }
 
   .thumbnail-item {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
   }
 }
 
@@ -942,12 +1059,19 @@ if (typeof window !== 'undefined') {
     padding: 0.875rem 1rem;
   }
 
+  .lightbox-controls {
+    bottom: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    gap: 0.75rem;
+    border-radius: 40px;
+  }
+
   .lightbox-info {
-    bottom: -2.5rem;
+    bottom: 7rem;
   }
 
   .lightbox-info h3 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
 
   .lightbox-info p {
