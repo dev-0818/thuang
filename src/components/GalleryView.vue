@@ -851,26 +851,47 @@ if (typeof window !== 'undefined') {
     padding: 0.5rem 0.875rem;
   }
 
+  /* Single column list view on mobile */
   .wall-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    padding: 2rem 1.5rem;
-    perspective: 1000px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem 1rem;
   }
   
+  /* All items in list layout - no grid spans */
+  .wall-item,
   .wall-item.size-large,
   .wall-item.size-medium,
-  .wall-item.size-small {
-    grid-column: span 1;
-    grid-row: span 1;
+  .wall-item.size-small,
+  .residential-layout .wall-item,
+  .commercial-layout .wall-item {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    position: relative;
+    border-radius: 12px;
+    cursor: pointer;
+    background: #2a2a2a;
   }
   
-  .wall-item {
-    grid-auto-rows: 280px;
+  /* Images fill container completely */
+  .wall-item picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .wall-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
   }
   
   .wall-item:hover {
-    transform: translateZ(20px) translateY(-8px) scale(1.01);
+    transform: translateY(-4px) scale(1.02);
   }
 
   .lightbox {
@@ -913,11 +934,12 @@ if (typeof window !== 'undefined') {
 
 @media (max-width: 480px) {
   .wall-grid {
-    padding: 1.5rem 1rem;
+    padding: 1rem 0.75rem;
+    gap: 0.5rem;
   }
-
-  .wall-item {
-    grid-auto-rows: 220px;
+  
+  .gallery-header {
+    padding: 0.875rem 1rem;
   }
 
   .lightbox-info {
