@@ -1,0 +1,24 @@
+{
+  "name": "Thuang Architecture",
+  "short_name": "Thuang",
+  "description": "Award-winning architecture firm specializing in contemporary residential homes and commercial spaces.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1c1410",
+  "theme_color": "#d4b896",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/img/Logo Export-35.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/img/Logo Export-35.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
