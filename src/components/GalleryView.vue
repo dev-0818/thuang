@@ -381,10 +381,47 @@ const currentImage = computed(() => {
   return selectedProject.value.images[currentImageIndex.value];
 });
 
+// Preload adjacent images for faster navigation
+const preloadImage = (imageName: string) => {
+  if (!imageName) return;
+  
+  // Use smaller images on mobile for faster loading
+  const isMobile = window.innerWidth <= 1200;
+  const imageSize = isMobile ? '1200' : '1920';
+  
+  const img = new Image();
+  img.src = `${baseUrl}img/${imageFolder.value}/${imageSize}/${imageName}_result_${imageSize}.webp`;
+};
+
+const preloadAdjacentImages = () => {
+  if (!selectedProject.value) return;
+  
+  // Preload next 2 images for smoother navigation
+  if (currentImageIndex.value < selectedProject.value.images.length - 1) {
+    preloadImage(selectedProject.value.images[currentImageIndex.value + 1]);
+  }
+  if (currentImageIndex.value < selectedProject.value.images.length - 2) {
+    preloadImage(selectedProject.value.images[currentImageIndex.value + 2]);
+  }
+  
+  // Preload previous image
+  if (currentImageIndex.value > 0) {
+    preloadImage(selectedProject.value.images[currentImageIndex.value - 1]);
+  }
+};
+
 const openLightbox = (project: Project) => {
   selectedProject.value = project;
   currentImageIndex.value = 0;
   document.body.style.overflow = 'hidden';
+  
+  // Preload first 4 images immediately for instant navigation
+  setTimeout(() => {
+    preloadImage(project.images[0]);
+    preloadImage(project.images[1]);
+    preloadImage(project.images[2]);
+    preloadImage(project.images[3]);
+  }, 0);
 };
 
 const closeLightbox = () => {
@@ -397,6 +434,7 @@ const nextImage = () => {
   if (selectedProject.value && currentImageIndex.value < selectedProject.value.images.length - 1) {
     currentImageIndex.value++;
     scrollToActiveThumbnail();
+    preloadAdjacentImages();
   }
 };
 
@@ -404,6 +442,7 @@ const prevImage = () => {
   if (currentImageIndex.value > 0) {
     currentImageIndex.value--;
     scrollToActiveThumbnail();
+    preloadAdjacentImages();
   }
 };
 
@@ -722,8 +761,13 @@ if (typeof window !== 'undefined') {
   border: none;
   color: white;
   cursor: pointer;
-  padding: 0.75rem;
+  width: 48px;
+  height: 48px;
+  padding: 0;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.3s ease;
   z-index: 10001;
 }
@@ -765,6 +809,8 @@ if (typeof window !== 'undefined') {
   -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
+  will-change: opacity;
+  transition: opacity 0.15s ease-out;
 }
 
 .lightbox-info {
@@ -981,6 +1027,12 @@ if (typeof window !== 'undefined') {
     display: block;
   }
   
+  /* Always show text overlay on mobile - no hover needed */
+  .wall-overlay {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
   .wall-item:hover {
     transform: translateY(-4px) scale(1.02);
   }
@@ -1007,17 +1059,22 @@ if (typeof window !== 'undefined') {
 
   .lightbox-image-container img {
     max-height: 55vh;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
   .lightbox-controls {
     padding: 0.75rem 1rem;
     gap: 1rem;
     bottom: 1rem;
+    will-change: transform;
   }
 
   .lightbox-info {
     bottom: 8.5rem;
     font-size: 0.9rem;
+    will-change: opacity;
+    transition: opacity 0.1s ease-out;
   }
 
   .lightbox-info h3 {
